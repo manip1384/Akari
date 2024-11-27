@@ -120,7 +120,7 @@ public class ModelImpl implements Model {
   public boolean isLampIllegal(int r, int c) {
     Puzzle puzzle = puzzleLibrary.getPuzzle(activePuzzleIndex);
     return puzzle.getCellType(r, c) == CellType.CLUE
-            || puzzle.getCellType(r, c) != CellType.CORRIDOR;
+        || puzzle.getCellType(r, c) != CellType.CORRIDOR;
   }
 
   @Override
