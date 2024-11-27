@@ -91,12 +91,13 @@ public class ModelImpl implements Model {
     for (int[] lamp : lampLocations) {
       int lampR = lamp[0];
       int lampC = lamp[1];
-      if (Math.abs(lampR - r) <= 1 && Math.abs(lampC - c) <= 1) {
+      if ((lampR == r || lampC == c) && Math.abs(lampR - r) <= 1 && Math.abs(lampC - c) <= 1) {
         return true;
       }
     }
     return false;
   }
+
 
   @Override
   public boolean isClueSatisfied(int r, int c) {
@@ -107,7 +108,7 @@ public class ModelImpl implements Model {
       for (int[] lamp : lampLocations) {
         int lampR = lamp[0];
         int lampC = lamp[1];
-        if (Math.abs(lampR - r) <= 1 && Math.abs(lampC - c) <= 1) {
+        if (Math.abs(lampR - r) <= 1 && Math.abs(lampC - c) <= 1 && (lampR != r || lampC != c)) {
           lampCount++;
         }
       }
@@ -115,6 +116,7 @@ public class ModelImpl implements Model {
     }
     return true;
   }
+
 
   @Override
   public boolean isLampIllegal(int r, int c) {
