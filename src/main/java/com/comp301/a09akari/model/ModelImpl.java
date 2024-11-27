@@ -74,6 +74,12 @@ public class ModelImpl implements Model {
 
   @Override
   public boolean isLamp(int r, int c) {
+    Puzzle puzzle = puzzleLibrary.getPuzzle(activePuzzleIndex);
+
+    if (r < 0 || r >= puzzle.getHeight() || c < 0 || c >= puzzle.getWidth()) {
+      return false;
+    }
+
     for (int[] lamp : lampLocations) {
       if (lamp[0] == r && lamp[1] == c) {
         return true;
@@ -115,8 +121,8 @@ public class ModelImpl implements Model {
   @Override
   public boolean isLampIllegal(int r, int c) {
     Puzzle puzzle = puzzleLibrary.getPuzzle(activePuzzleIndex);
-      return puzzle.getCellType(r, c) == CellType.CLUE
-              || puzzle.getCellType(r, c) != CellType.CORRIDOR;
+    return puzzle.getCellType(r, c) == CellType.CLUE
+        || puzzle.getCellType(r, c) != CellType.CORRIDOR;
   }
 
   @Override
@@ -150,7 +156,7 @@ public class ModelImpl implements Model {
 
   @Override
   public int getPuzzleLibrarySize() {
-    return 0;
+    return puzzleLibrary.size(); // Return the actual size of the puzzle library
   }
 
   @Override
