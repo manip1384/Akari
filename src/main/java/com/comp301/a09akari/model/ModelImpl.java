@@ -1,8 +1,12 @@
 package com.comp301.a09akari.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ModelImpl implements Model {
   private PuzzleLibrary puzzleLibrary;
   private int activePuzzleIndex;
+  private List<ModelObserver> observers;
 
   public ModelImpl(PuzzleLibrary puzzleLibrary) {
     if (puzzleLibrary == null) {
@@ -10,6 +14,7 @@ public class ModelImpl implements Model {
     }
     this.puzzleLibrary = puzzleLibrary;
     this.activePuzzleIndex = 0;
+    this.observers = new ArrayList<>();
   }
 
   @Override
@@ -18,7 +23,10 @@ public class ModelImpl implements Model {
     if (activePuzzle.getCellType(r, c) != CellType.CORRIDOR) {
       throw new IllegalArgumentException("Cell must be a corridor to add a lamp");
     }
-    // Add lamp logic
+    // Logic to add lamp
+
+    // Notify observers that the model has changed
+    notifyObservers();
   }
 
   @Override
@@ -27,25 +35,28 @@ public class ModelImpl implements Model {
     if (activePuzzle.getCellType(r, c) != CellType.CORRIDOR) {
       throw new IllegalArgumentException("Cell must be a corridor to remove a lamp");
     }
-    // Remove lamp logic
+    // Logic to remove lamp
+
+    // Notify observers that the model has changed
+    notifyObservers();
   }
 
   @Override
   public boolean isLit(int r, int c) {
     Puzzle activePuzzle = getActivePuzzle();
-    // Check if the cell is lit
+    // Logic to check if the cell is lit
     return false;
   }
 
   @Override
   public boolean isLamp(int r, int c) {
-    // Check if the cell contains a lamp
+    // Logic to check if the cell contains a lamp
     return false;
   }
 
   @Override
   public boolean isLampIllegal(int r, int c) {
-    // Check if the lamp placement is illegal
+    // Logic to check if the lamp placement is illegal
     return false;
   }
 
@@ -65,6 +76,8 @@ public class ModelImpl implements Model {
       throw new IndexOutOfBoundsException("Puzzle index out of bounds");
     }
     this.activePuzzleIndex = index;
+    // Notify observers that the active puzzle index has changed
+    notifyObservers();
   }
 
   @Override
@@ -74,29 +87,39 @@ public class ModelImpl implements Model {
 
   @Override
   public void resetPuzzle() {
-    // Reset puzzle (remove all lamps)
+    // Logic to reset the puzzle (remove all lamps)
+    // Notify observers that the puzzle has been reset
+    notifyObservers();
   }
 
   @Override
   public boolean isSolved() {
     Puzzle activePuzzle = getActivePuzzle();
-    // Implement the logic to check if the puzzle is solved
+    // Logic to check if the puzzle is solved
     return false;
   }
 
   @Override
   public boolean isClueSatisfied(int r, int c) {
-    // Check if the clue is satisfied
+    // Logic to check if the clue is satisfied
     return false;
   }
 
   @Override
   public void addObserver(ModelObserver observer) {
-    // Add observer logic
+    if (observer != null) {
+      observers.add(observer);
+    }
   }
 
   @Override
   public void removeObserver(ModelObserver observer) {
-    // Remove observer logic
+    observers.remove(observer);
+  }
+
+  private void notifyObservers() {
+    for (ModelObserver observer : observers) {
+      observer.update(this);
+    }
   }
 }
