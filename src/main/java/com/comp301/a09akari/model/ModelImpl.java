@@ -144,11 +144,23 @@ public class ModelImpl implements Model {
 
   private int[][] addLampToBoard(Puzzle puzzle, int r, int c) {
     int[][] board = new int[puzzle.getHeight()][puzzle.getWidth()];
+    for (int i = 0; i < puzzle.getHeight(); i++) {
+      for (int j = 0; j < puzzle.getWidth(); j++) {
+        board[i][j] = puzzle.getClue(i, j);
+      }
+    }
+    board[r][c] = 7;
     return board;
   }
 
   private int[][] removeLampFromBoard(Puzzle puzzle, int r, int c) {
     int[][] board = new int[puzzle.getHeight()][puzzle.getWidth()];
+    for (int i = 0; i < puzzle.getHeight(); i++) {
+      for (int j = 0; j < puzzle.getWidth(); j++) {
+        board[i][j] = puzzle.getClue(i, j);
+      }
+    }
+    board[r][c] = 6;
     return board;
   }
 
@@ -157,7 +169,7 @@ public class ModelImpl implements Model {
   }
 
   private boolean checkLampAt(int r, int c) {
-    return false;
+    return activePuzzle.getClue(r, c) == 7;
   }
 
   private boolean checkLampIllegal(int r, int c) {
@@ -166,6 +178,11 @@ public class ModelImpl implements Model {
 
   private int[][] resetLampPositions(Puzzle puzzle) {
     int[][] board = new int[puzzle.getHeight()][puzzle.getWidth()];
+    for (int i = 0; i < puzzle.getHeight(); i++) {
+      for (int j = 0; j < puzzle.getWidth(); j++) {
+        board[i][j] = puzzle.getClue(i, j);
+      }
+    }
     return board;
   }
 
@@ -175,12 +192,5 @@ public class ModelImpl implements Model {
 
   private boolean checkClueSatisfaction(int r, int c) {
     return false;
-  }
-
-  public void addPuzzle(Puzzle puzzle) {
-    if (puzzle == null) {
-      throw new IllegalArgumentException("Puzzle cannot be null");
-    }
-    puzzleLibrary.add(puzzle);
   }
 }
