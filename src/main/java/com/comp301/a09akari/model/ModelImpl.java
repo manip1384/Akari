@@ -7,87 +7,65 @@ public class ModelImpl implements Model {
   private final PuzzleLibrary puzzleLibrary;
   private int activePuzzleIndex;
   private final List<ModelObserver> observers;
-  private Puzzle activePuzzle;
 
-  public ModelImpl(PuzzleLibrary library) {
-    this.puzzleLibrary = library;
+  public ModelImpl(PuzzleLibrary puzzleLibrary) {
+    if (puzzleLibrary == null) {
+      throw new IllegalArgumentException("PuzzleLibrary cannot be null");
+    }
+    this.puzzleLibrary = puzzleLibrary;
     this.activePuzzleIndex = 0;
-    this.activePuzzle = library.getPuzzle(activePuzzleIndex);
     this.observers = new ArrayList<>();
   }
 
   @Override
   public void addLamp(int r, int c) {
-    if (r < 0 || r >= activePuzzle.getHeight() || c < 0 || c >= activePuzzle.getWidth()) {
-      throw new IndexOutOfBoundsException("Row or column out of bounds");
+    Puzzle puzzle = getActivePuzzle();
+    if (puzzle.getCellType(r, c) != CellType.CORRIDOR) {
+      throw new IllegalArgumentException("Cell is not a corridor");
     }
-
-    if (activePuzzle.getCellType(r, c) != CellType.CORRIDOR) {
-      throw new IllegalArgumentException("The cell is not a CORRIDOR");
-    }
-
     if (isLamp(r, c)) {
       return;
     }
-
+    puzzle.getCellType(r, c);
     notifyObservers();
   }
 
   @Override
   public void removeLamp(int r, int c) {
-    if (r < 0 || r >= activePuzzle.getHeight() || c < 0 || c >= activePuzzle.getWidth()) {
-      throw new IndexOutOfBoundsException("Row or column out of bounds");
+    Puzzle puzzle = getActivePuzzle();
+    if (puzzle.getCellType(r, c) != CellType.CORRIDOR) {
+      throw new IllegalArgumentException("Cell is not a corridor");
     }
-
-    if (activePuzzle.getCellType(r, c) != CellType.CORRIDOR) {
-      throw new IllegalArgumentException("The cell is not a CORRIDOR");
-    }
-
     if (!isLamp(r, c)) {
       return;
     }
-
     notifyObservers();
   }
 
   @Override
   public boolean isLit(int r, int c) {
-    if (r < 0 || r >= activePuzzle.getHeight() || c < 0 || c >= activePuzzle.getWidth()) {
-      throw new IndexOutOfBoundsException("Row or column out of bounds");
+    Puzzle puzzle = getActivePuzzle();
+    if (puzzle.getCellType(r, c) != CellType.CORRIDOR) {
+      throw new IllegalArgumentException("Cell is not a corridor");
     }
-
-    if (activePuzzle.getCellType(r, c) != CellType.CORRIDOR) {
-      throw new IllegalArgumentException("The cell is not a CORRIDOR");
-    }
-
     return false;
   }
 
   @Override
   public boolean isLamp(int r, int c) {
+    Puzzle puzzle = getActivePuzzle();
     return false;
   }
 
   @Override
   public boolean isLampIllegal(int r, int c) {
-    if (r < 0 || r >= activePuzzle.getHeight() || c < 0 || c >= activePuzzle.getWidth()) {
-      throw new IndexOutOfBoundsException("Row or column out of bounds");
-    }
-
-    if (activePuzzle.getCellType(r, c) != CellType.CORRIDOR) {
-      throw new IllegalArgumentException("The cell is not a CORRIDOR");
-    }
-
-    if (!isLamp(r, c)) {
-      throw new IllegalArgumentException("No lamp at the specified location");
-    }
-
+    Puzzle puzzle = getActivePuzzle();
     return false;
   }
 
   @Override
   public Puzzle getActivePuzzle() {
-    return activePuzzle;
+    return puzzleLibrary.getPuzzle(activePuzzleIndex);
   }
 
   @Override
@@ -98,10 +76,9 @@ public class ModelImpl implements Model {
   @Override
   public void setActivePuzzleIndex(int index) {
     if (index < 0 || index >= puzzleLibrary.size()) {
-      throw new IndexOutOfBoundsException("Puzzle index out of bounds");
+      throw new IndexOutOfBoundsException("Invalid puzzle index");
     }
     activePuzzleIndex = index;
-    activePuzzle = puzzleLibrary.getPuzzle(activePuzzleIndex);
     notifyObservers();
   }
 
@@ -117,41 +94,52 @@ public class ModelImpl implements Model {
 
   @Override
   public boolean isSolved() {
-    return false;
+    Puzzle puzzle = getActivePuzzle();
+    for (int r = 0; r < puzzle.getHeight(); r++) {
+      for (int c = 0; c < puzzle.getWidth(); c++) {
+        if (puzzle.getCellType(r, c) == CellType.CLUE) {
+          if (!isClueSatisfied(r, c)) {
+            return false;
+          }
+        }
+        if (puzzle.getCellType(r, c) == CellType.CORRIDOR) {
+          if (!isLit(r, c)) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
   }
 
   @Override
   public boolean isClueSatisfied(int r, int c) {
-    if (r < 0 || r >= activePuzzle.getHeight() || c < 0 || c >= activePuzzle.getWidth()) {
-      throw new IndexOutOfBoundsException("Row or column out of bounds");
+    Puzzle puzzle = getActivePuzzle();
+    if (puzzle.getCellType(r, c) != CellType.CLUE) {
+      throw new IllegalArgumentException("Cell is not a clue");
     }
-
-    if (activePuzzle.getCellType(r, c) != CellType.CLUE) {
-      throw new IllegalArgumentException("The cell is not a CLUE");
-    }
-
-    return false;
+    int clueValue = puzzle.getClue(r, c);
+    int adjacentLamps = 0;
+    if (r > 0 && isLamp(r - 1, c)) adjacentLamps++;
+    if (r < puzzle.getHeight() - 1 && isLamp(r + 1, c)) adjacentLamps++;
+    if (c > 0 && isLamp(r, c - 1)) adjacentLamps++;
+    if (c < puzzle.getWidth() - 1 && isLamp(r, c + 1)) adjacentLamps++;
+    return adjacentLamps == clueValue;
   }
 
   @Override
   public void addObserver(ModelObserver observer) {
-    if (observer == null) {
-      throw new IllegalArgumentException("Observer cannot be null");
-    }
     observers.add(observer);
   }
 
   @Override
   public void removeObserver(ModelObserver observer) {
-    if (observer == null) {
-      throw new IllegalArgumentException("Observer cannot be null");
-    }
     observers.remove(observer);
   }
 
   private void notifyObservers() {
     for (ModelObserver observer : observers) {
-      observer.update();
+      observer.update(this);
     }
   }
 }
