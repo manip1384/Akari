@@ -144,13 +144,11 @@ public class ModelImpl implements Model {
 
   private int[][] addLampToBoard(Puzzle puzzle, int r, int c) {
     int[][] board = new int[puzzle.getHeight()][puzzle.getWidth()];
-    // Logic to add a lamp to the puzzle
     return board;
   }
 
   private int[][] removeLampFromBoard(Puzzle puzzle, int r, int c) {
     int[][] board = new int[puzzle.getHeight()][puzzle.getWidth()];
-    // Logic to remove a lamp from the puzzle
     return board;
   }
 
@@ -168,7 +166,6 @@ public class ModelImpl implements Model {
 
   private int[][] resetLampPositions(Puzzle puzzle) {
     int[][] board = new int[puzzle.getHeight()][puzzle.getWidth()];
-    // Logic to reset the puzzle lamps
     return board;
   }
 
