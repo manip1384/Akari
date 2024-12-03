@@ -81,7 +81,7 @@ public class ModelImpl implements Model {
     validatePosition(row, col, CellType.CORRIDOR);
     Position pos = new Position(row, col);
     return getCurrentPuzzleLamps().stream()
-            .anyMatch(lamp -> pos.equals(lamp) || isInLineOfSight(pos, lamp));
+        .anyMatch(lamp -> pos.equals(lamp) || isInLineOfSight(pos, lamp));
   }
 
   private Set<Position> getCurrentPuzzleLamps() {
@@ -119,7 +119,7 @@ public class ModelImpl implements Model {
     }
     Position lampPos = new Position(row, col);
     return getCurrentPuzzleLamps().stream()
-            .anyMatch(otherLamp -> !lampPos.equals(otherLamp) && isInLineOfSight(lampPos, otherLamp));
+        .anyMatch(otherLamp -> !lampPos.equals(otherLamp) && isInLineOfSight(lampPos, otherLamp));
   }
 
   @Override
@@ -132,11 +132,11 @@ public class ModelImpl implements Model {
     for (int[] dir : adjacent) {
       int newRow = row + dir[0], newCol = col + dir[1];
       if (newRow >= 0
-              && newRow < getActivePuzzle().getHeight()
-              && newCol >= 0
-              && newCol < getActivePuzzle().getWidth()
-              && getActivePuzzle().getCellType(newRow, newCol) == CellType.CORRIDOR
-              && isLamp(newRow, newCol)) {
+          && newRow < getActivePuzzle().getHeight()
+          && newCol >= 0
+          && newCol < getActivePuzzle().getWidth()
+          && getActivePuzzle().getCellType(newRow, newCol) == CellType.CORRIDOR
+          && isLamp(newRow, newCol)) {
         count++;
       }
     }
