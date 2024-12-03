@@ -10,6 +10,7 @@ public class ModelImpl implements Model {
   private int activePuzzleIndex;
   private final Set<int[]> lampLocations;
   private final List<ModelObserver> observers;
+  private boolean[][] isLit;
 
   public ModelImpl(PuzzleLibrary library) {
     if (library == null || library.size() == 0) {
@@ -26,6 +27,8 @@ public class ModelImpl implements Model {
       observer.update(this);
     }
   }
+
+
 
   @Override
   public void addLamp(int r, int c) {
@@ -53,16 +56,23 @@ public class ModelImpl implements Model {
     notifyObservers();
   }
 
-  @Override
-  public boolean isLit(int r, int c) {
+  private void isValidCorridor(int r, int c) {
     if (!isValidCell(r, c)) {
-      throw new IndexOutOfBoundsException("Cell coordinates out of bounds");
+      throw new IndexOutOfBoundsException();
     }
     if (getActivePuzzle().getCellType(r, c) != CellType.CORRIDOR) {
-      throw new IllegalArgumentException("Cell must be of type CORRIDOR to check lighting");
+      throw new IllegalArgumentException("Cell must be of type CORRIDOR");
     }
-    return lampLocations.stream().anyMatch(lamp -> lamp[0] == r || lamp[1] == c);
   }
+
+
+  @Override
+  public boolean isLit(int r, int c) {
+    isValidCorridor(r, c);
+    return isLit[r][c];
+  }
+
+
 
   @Override
   public boolean isLamp(int r, int c) {
@@ -78,7 +88,7 @@ public class ModelImpl implements Model {
         .anyMatch(
             lamp ->
                 lamp[0] == r && lamp[1] != c
-                    || lamp[1] == c && lamp[0] != r); // Same row or column without being blocked
+                    || lamp[1] == c && lamp[0] != r);
   }
 
   @Override
@@ -114,17 +124,32 @@ public class ModelImpl implements Model {
 
   @Override
   public boolean isSolved() {
-    Puzzle puzzle = getActivePuzzle();
-    for (int r = 0; r < puzzle.getHeight(); r++) {
-      for (int c = 0; c < puzzle.getWidth(); c++) {
-        CellType type = puzzle.getCellType(r, c);
-        if (type == CellType.CORRIDOR && !isLit(r, c)) return false;
-        if (type == CellType.CLUE && !isClueSatisfied(r, c)) return false;
-        if (type == CellType.CORRIDOR && isLamp(r, c) && isLampIllegal(r, c)) return false;
+    Puzzle activePuzzle = getActivePuzzle();
+    // Goes thru all cells
+    for (int r = 0; r < activePuzzle.getHeight(); r++) {
+      for (int c = 0; c < activePuzzle.getWidth(); c++) {
+        CellType ct = activePuzzle.getCellType(r, c);
+
+        if (ct == CellType.CORRIDOR) {
+          if (!isLit(r, c)) {
+            return false;
+          }
+          if (isLamp(r, c) && isLampIllegal(r, c)) {
+            return false;
+          }
+        }
+
+        if (ct == CellType.CLUE) {
+          if (!isClueSatisfied(r, c)) {
+            return false;
+          }
+        }
       }
     }
     return true;
   }
+
+
 
   @Override
   public boolean isClueSatisfied(int r, int c) {
