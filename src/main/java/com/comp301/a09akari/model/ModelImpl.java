@@ -36,7 +36,7 @@ public class ModelImpl implements Model {
       throw new IllegalArgumentException("Cell must be of type CORRIDOR to add a lamp");
     }
     if (!isLamp(r, c)) {
-      lampLocations.add(new int[]{r, c});
+      lampLocations.add(new int[] {r, c});
       notifyObservers();
     }
   }
@@ -75,11 +75,10 @@ public class ModelImpl implements Model {
       throw new IllegalArgumentException("Cell must contain a lamp to check legality");
     }
     return lampLocations.stream()
-            .anyMatch(
-                    lamp ->
-                            lamp[0] == r
-                                    && lamp[1] != c
-                                    || lamp[1] == c && lamp[0] != r); // Same row or column without being blocked
+        .anyMatch(
+            lamp ->
+                lamp[0] == r && lamp[1] != c
+                    || lamp[1] == c && lamp[0] != r); // Same row or column without being blocked
   }
 
   @Override
@@ -137,12 +136,12 @@ public class ModelImpl implements Model {
     }
     int clue = getActivePuzzle().getClue(r, c);
     long adjacentLamps =
-            lampLocations.stream()
-                    .filter(
-                            lamp ->
-                                    Math.abs(lamp[0] - r) + Math.abs(lamp[1] - c)
-                                            == 1) // Directly adjacent (Manhattan distance = 1)
-                    .count();
+        lampLocations.stream()
+            .filter(
+                lamp ->
+                    Math.abs(lamp[0] - r) + Math.abs(lamp[1] - c)
+                        == 1) // Directly adjacent (Manhattan distance = 1)
+            .count();
     return adjacentLamps == clue;
   }
 

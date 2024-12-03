@@ -20,4 +20,3 @@ public interface Puzzle {
    */
   int getClue(int r, int c);
 }
-
