@@ -99,10 +99,33 @@ public class ModelImpl implements Model {
     return false;
   }
 
+  private void correctPosition(int r, int c, CellType expectedType) {
+    Puzzle puzzle = getActivePuzzle();
+    if (r < 0 || c < 0 || r >= puzzle.getHeight() || c >= puzzle.getWidth()) {
+      throw new IndexOutOfBoundsException("Out of bounds");
+    }
+    if (expectedType != null && puzzle.getCellType(r, c) != expectedType) {
+      throw new IllegalArgumentException("Invalid cell type");
+    }
+  }
+
   @Override
   public boolean isClueSatisfied(int r, int c) {
-    // Logic to check if the clue is satisfied
-    return false;
+    correctPosition(r, c, CellType.CLUE);
+    int clue = getActivePuzzle().getClue(r, c);
+    int count = 0;
+
+    int[][] adjacent = {{-1,0}, {1,0}, {0,-1}, {0,1}};
+    for (int[] dir : adjacent) {
+      int newR = r + dir[0], newC = c + dir[1];
+      if (newR >= 0 && newR < getActivePuzzle().getHeight() &&
+              newC >= 0 && newC < getActivePuzzle().getWidth() &&
+              getActivePuzzle().getCellType(newR, newC) == CellType.CORRIDOR &&
+              isLamp(newR, newC)) {
+        count++;
+      }
+    }
+    return count == clue;
   }
 
   @Override
