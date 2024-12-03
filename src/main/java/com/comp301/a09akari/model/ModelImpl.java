@@ -118,15 +118,13 @@ public class ModelImpl implements Model {
     Puzzle puzzle = getActivePuzzle();
     for (int r = 0; r < puzzle.getHeight(); r++) {
       for (int c = 0; c < puzzle.getWidth(); c++) {
-        CellType cellType = puzzle.getCellType(r, c);
-        if (cellType == CellType.CORRIDOR && !isLit(r, c)) {
-          return false;
-        } else if (cellType == CellType.CLUE && !isClueSatisfied(r, c)) {
-          return false;
-        }
+        CellType type = puzzle.getCellType(r, c);
+        if (type == CellType.CORRIDOR && !isLit(r, c)) return false;
+        if (type == CellType.CLUE && !isClueSatisfied(r, c)) return false;
+        if (type == CellType.CORRIDOR && isLamp(r, c) && isLampIllegal(r, c)) return false;
       }
     }
-    return lampLocations.stream().noneMatch(lamp -> isLampIllegal(lamp[0], lamp[1]));
+    return true;
   }
 
   @Override
