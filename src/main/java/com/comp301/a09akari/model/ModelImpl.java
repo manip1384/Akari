@@ -29,38 +29,63 @@ public class ModelImpl implements Model {
   }
 
   private final PuzzleLibrary puzzleLibrary;
-  private int currentPuzzleIndex;
-  private final List<Set<Position>> puzzleLamps;
-  private final List<ModelObserver> observers;
+  private int puzzleIndex;
+  private final List<Set<Position>> lampsByPuzzle;
+  private final List<ModelObserver> observerList;
 
   public ModelImpl(PuzzleLibrary library) {
     if (library == null) throw new IllegalArgumentException("Library cannot be null");
 
     this.puzzleLibrary = library;
-    this.currentPuzzleIndex = 0;
-    this.observers = new ArrayList<>();
-    this.puzzleLamps = new ArrayList<>();
+    this.puzzleIndex = 0;
+    this.observerList = new ArrayList<>();
+    this.lampsByPuzzle = new ArrayList<>();
 
     for (int i = 0; i < library.size(); i++) {
-      puzzleLamps.add(new HashSet<>());
+      lampsByPuzzle.add(new HashSet<>());
     }
   }
 
-  private void validatePosition(int r, int c, CellType expectedType) {
+  private void validatePosition(int row, int col, CellType expectedType) {
     Puzzle puzzle = getActivePuzzle();
-    if (r < 0 || c < 0 || r >= puzzle.getHeight() || c >= puzzle.getWidth()) {
+    if (row < 0 || col < 0 || row >= puzzle.getHeight() || col >= puzzle.getWidth()) {
       throw new IndexOutOfBoundsException("Position out of bounds");
     }
-    if (expectedType != null && puzzle.getCellType(r, c) != expectedType) {
+    if (expectedType != null && puzzle.getCellType(row, col) != expectedType) {
       throw new IllegalArgumentException("Invalid cell type");
     }
   }
 
   @Override
-  public void addLamp(int r, int c) {
-    validatePosition(r, c, CellType.CORRIDOR);
-    puzzleLamps.get(currentPuzzleIndex).add(new Position(r, c));
+  public void addLamp(int row, int col) {
+    validatePosition(row, col, CellType.CORRIDOR);
+    lampsByPuzzle.get(puzzleIndex).add(new Position(row, col));
     notifyObservers();
+  }
+
+  @Override
+  public void removeLamp(int row, int col) {
+    validatePosition(row, col, CellType.CORRIDOR);
+    lampsByPuzzle.get(puzzleIndex).remove(new Position(row, col));
+    notifyObservers();
+  }
+
+  @Override
+  public boolean isLamp(int row, int col) {
+    validatePosition(row, col, CellType.CORRIDOR);
+    return getCurrentPuzzleLamps().contains(new Position(row, col));
+  }
+
+  @Override
+  public boolean isLit(int row, int col) {
+    validatePosition(row, col, CellType.CORRIDOR);
+    Position pos = new Position(row, col);
+    return getCurrentPuzzleLamps().stream()
+            .anyMatch(lamp -> pos.equals(lamp) || isInLineOfSight(pos, lamp));
+  }
+
+  private Set<Position> getCurrentPuzzleLamps() {
+    return lampsByPuzzle.get(puzzleIndex);
   }
 
   private boolean isInLineOfSight(Position p1, Position p2) {
@@ -87,62 +112,31 @@ public class ModelImpl implements Model {
   }
 
   @Override
-  public void removeLamp(int r, int c) {
-    validatePosition(r, c, CellType.CORRIDOR);
-    puzzleLamps.get(currentPuzzleIndex).remove(new Position(r, c));
-    notifyObservers();
-  }
-
-  private Set<Position> getCurrentPuzzleLamps() {
-    return puzzleLamps.get(currentPuzzleIndex);
-  }
-
-  @Override
-  public boolean isLit(int r, int c) {
-    validatePosition(r, c, CellType.CORRIDOR);
-    Position pos = new Position(r, c);
-    return getCurrentPuzzleLamps().stream()
-        .anyMatch(lamp -> pos.equals(lamp) || isInLineOfSight(pos, lamp));
-  }
-
-  @Override
-  public boolean isLamp(int r, int c) {
-    validatePosition(r, c, CellType.CORRIDOR);
-    return getCurrentPuzzleLamps().contains(new Position(r, c));
-  }
-
-  private void notifyObservers() {
-    for (ModelObserver observer : observers) {
-      observer.update(this);
-    }
-  }
-
-  @Override
-  public boolean isLampIllegal(int r, int c) {
-    validatePosition(r, c, null);
-    if (!isLamp(r, c)) {
+  public boolean isLampIllegal(int row, int col) {
+    validatePosition(row, col, null);
+    if (!isLamp(row, col)) {
       throw new IllegalArgumentException("No lamp at position");
     }
-    Position lampPos = new Position(r, c);
+    Position lampPos = new Position(row, col);
     return getCurrentPuzzleLamps().stream()
-        .anyMatch(otherLamp -> !lampPos.equals(otherLamp) && isInLineOfSight(lampPos, otherLamp));
+            .anyMatch(otherLamp -> !lampPos.equals(otherLamp) && isInLineOfSight(lampPos, otherLamp));
   }
 
   @Override
-  public boolean isClueSatisfied(int r, int c) {
-    validatePosition(r, c, CellType.CLUE);
-    int clue = getActivePuzzle().getClue(r, c);
+  public boolean isClueSatisfied(int row, int col) {
+    validatePosition(row, col, CellType.CLUE);
+    int clue = getActivePuzzle().getClue(row, col);
     int count = 0;
 
     int[][] adjacent = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
     for (int[] dir : adjacent) {
-      int newR = r + dir[0], newC = c + dir[1];
-      if (newR >= 0
-          && newR < getActivePuzzle().getHeight()
-          && newC >= 0
-          && newC < getActivePuzzle().getWidth()
-          && getActivePuzzle().getCellType(newR, newC) == CellType.CORRIDOR
-          && isLamp(newR, newC)) {
+      int newRow = row + dir[0], newCol = col + dir[1];
+      if (newRow >= 0
+              && newRow < getActivePuzzle().getHeight()
+              && newCol >= 0
+              && newCol < getActivePuzzle().getWidth()
+              && getActivePuzzle().getCellType(newRow, newCol) == CellType.CORRIDOR
+              && isLamp(newRow, newCol)) {
         count++;
       }
     }
@@ -152,12 +146,12 @@ public class ModelImpl implements Model {
   @Override
   public boolean isSolved() {
     Puzzle puzzle = getActivePuzzle();
-    for (int r = 0; r < puzzle.getHeight(); r++) {
-      for (int c = 0; c < puzzle.getWidth(); c++) {
-        CellType type = puzzle.getCellType(r, c);
-        if (type == CellType.CORRIDOR && !isLit(r, c)) return false;
-        if (type == CellType.CLUE && !isClueSatisfied(r, c)) return false;
-        if (type == CellType.CORRIDOR && isLamp(r, c) && isLampIllegal(r, c)) return false;
+    for (int row = 0; row < puzzle.getHeight(); row++) {
+      for (int col = 0; col < puzzle.getWidth(); col++) {
+        CellType type = puzzle.getCellType(row, col);
+        if (type == CellType.CORRIDOR && !isLit(row, col)) return false;
+        if (type == CellType.CLUE && !isClueSatisfied(row, col)) return false;
+        if (type == CellType.CORRIDOR && isLamp(row, col) && isLampIllegal(row, col)) return false;
       }
     }
     return true;
@@ -171,12 +165,12 @@ public class ModelImpl implements Model {
 
   @Override
   public Puzzle getActivePuzzle() {
-    return puzzleLibrary.getPuzzle(currentPuzzleIndex);
+    return puzzleLibrary.getPuzzle(puzzleIndex);
   }
 
   @Override
   public int getActivePuzzleIndex() {
-    return currentPuzzleIndex;
+    return puzzleIndex;
   }
 
   @Override
@@ -184,7 +178,7 @@ public class ModelImpl implements Model {
     if (index < 0 || index >= puzzleLibrary.size()) {
       throw new IndexOutOfBoundsException("Invalid puzzle index");
     }
-    currentPuzzleIndex = index;
+    puzzleIndex = index;
     notifyObservers();
   }
 
@@ -195,11 +189,17 @@ public class ModelImpl implements Model {
 
   @Override
   public void addObserver(ModelObserver observer) {
-    observers.add(observer);
+    observerList.add(observer);
   }
 
   @Override
   public void removeObserver(ModelObserver observer) {
-    observers.remove(observer);
+    observerList.remove(observer);
+  }
+
+  private void notifyObservers() {
+    for (ModelObserver observer : observerList) {
+      observer.update(this);
+    }
   }
 }
