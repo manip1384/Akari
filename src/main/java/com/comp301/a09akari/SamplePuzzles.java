@@ -1,5 +1,7 @@
 package com.comp301.a09akari;
 
+import com.comp301.a09akari.model.Puzzle;
+
 public class SamplePuzzles {
   // The following mapping between cells and integers is used for the puzzles in this file
   //   0 <--> Clue cell with value "0"
