@@ -52,8 +52,8 @@ Built with **clean architecture** principles:
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/akari-puzzle-game.git
-cd akari-puzzle-game
+git clone https://github.com/manip1384/Akari.git
+cd Akari
 ```
 
 ### 2. Open in IntelliJ IDEA
